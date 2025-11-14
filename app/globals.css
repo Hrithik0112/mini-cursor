@@ -11,25 +11,25 @@
     --card-foreground: 222 47% 11%;
     --popover: 30 20% 98%;
     --popover-foreground: 222 47% 11%;
-    --primary: 217 91% 60%;
+    --primary: 30 25% 55%;
     --primary-foreground: 30 20% 98%;
     --secondary: 30 20% 95%;
     --secondary-foreground: 222 47% 11%;
     --muted: 30 20% 92%;
     --muted-foreground: 222 47% 30%;
-    --accent: 217 91% 60%;
+    --accent: 30 25% 55%;
     --accent-foreground: 30 20% 98%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 30 20% 98%;
     --border: 30 20% 85%;
     --input: 30 20% 92%;
-    --ring: 217 91% 60%;
+    --ring: 30 25% 55%;
     --radius: 0.5rem;
 
     /* Beige theme specific colors */
     --sidebar-bg: 30 20% 96%;
     --panel-bg: 30 20% 98%;
-    --accent-hover: 217 91% 65%;
+    --accent-hover: 30 25% 60%;
     --ai-panel-bg: 30 20% 96%;
     --ai-panel-text: 222 47% 11%;
   }
@@ -87,5 +87,15 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground) / 0.3);
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 
