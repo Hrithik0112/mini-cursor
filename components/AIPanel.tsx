@@ -283,9 +283,9 @@ export default function AIPanel() {
           setIsResizing(true);
         }}
         className="absolute left-0 top-0 bottom-0 w-2 cursor-col-resize z-10 flex items-center justify-center"
-      >
-        <div
-          className={cn(
+            >
+              <div
+                className={cn(
             "h-full w-0.5 hover:w-1 hover:bg-primary/40 transition-all",
             isResizing && "w-1 bg-primary/60"
           )}
@@ -293,44 +293,64 @@ export default function AIPanel() {
       </div>
       <Header onClose={() => setAIPanelOpen(false)} />
 
-      <MessagesArea
-        ai={ai}
-        onApplyEdit={handleApplyEdit}
-        onDismissEdit={() => setPendingEdit(null)}
-        messagesEndRef={messagesEndRef}
-      />
+      {(() => {
+        const hasMessages = ai.messages.length > 0 || ai.context.length > 0 || ai.pendingEdit;
+        const userMessageCount = ai.messages.filter(m => m.role === 'user').length;
+        const isFirstMessage = userMessageCount === 1 && !ai.context.length && !ai.pendingEdit;
+        const inputSection = (
+          <motion.div
+            layout
+            initial={isFirstMessage ? { y: -100, opacity: 0 } : false}
+            animate={{ y: 0, opacity: 1 }}
+            transition={isFirstMessage ? { type: "spring", stiffness: 300, damping: 30 } : { layout: { duration: 0.3 } }}
+          >
+            <InputSection
+            input={input}
+            onInputChange={setInput}
+            onKeyPress={handleKeyPress}
+            onSend={handleSend}
+            isStreaming={ai.isStreaming}
+            agentMode={agentMode}
+            agentModes={agentModes}
+            agentDropdownOpen={agentDropdownOpen}
+            onAgentDropdownChange={setAgentDropdownOpen}
+            onAgentModeSelect={setAgentMode}
+            autoEnabled={autoEnabled}
+            maxModeEnabled={maxModeEnabled}
+            selectedModel={selectedModel}
+            aiModels={aiModels}
+            autoModalOpen={autoModalOpen}
+            onAutoModalChange={setAutoModalOpen}
+            onAutoToggle={(enabled) => {
+              setAutoEnabled(enabled);
+              if (!enabled) {
+                setAutoMode(selectedModel);
+              } else {
+                setAutoMode('Auto');
+              }
+            }}
+            onMaxModeToggle={setMaxModeEnabled}
+            onModelSelect={(model) => {
+              setSelectedModel(model);
+              setAutoMode(model);
+            }}
+          />
+          </motion.div>
+        );
 
-      <InputSection
-        input={input}
-        onInputChange={setInput}
-        onKeyPress={handleKeyPress}
-        onSend={handleSend}
-        isStreaming={ai.isStreaming}
-        agentMode={agentMode}
-        agentModes={agentModes}
-        agentDropdownOpen={agentDropdownOpen}
-        onAgentDropdownChange={setAgentDropdownOpen}
-        onAgentModeSelect={setAgentMode}
-        autoEnabled={autoEnabled}
-        maxModeEnabled={maxModeEnabled}
-        selectedModel={selectedModel}
-        aiModels={aiModels}
-        autoModalOpen={autoModalOpen}
-        onAutoModalChange={setAutoModalOpen}
-        onAutoToggle={(enabled) => {
-          setAutoEnabled(enabled);
-          if (!enabled) {
-            setAutoMode(selectedModel);
-          } else {
-            setAutoMode('Auto');
-          }
-        }}
-        onMaxModeToggle={setMaxModeEnabled}
-        onModelSelect={(model) => {
-          setSelectedModel(model);
-          setAutoMode(model);
-        }}
-      />
+        return (
+          <>
+            <MessagesArea
+              ai={ai}
+              onApplyEdit={handleApplyEdit}
+              onDismissEdit={() => setPendingEdit(null)}
+              messagesEndRef={messagesEndRef}
+              inputSection={!hasMessages ? inputSection : undefined}
+            />
+            {hasMessages && inputSection}
+          </>
+        );
+      })()}
 
     </motion.div>
     </TooltipProvider>

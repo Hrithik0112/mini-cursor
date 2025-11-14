@@ -54,10 +54,10 @@ export default function InputSection({
   onModelSelect,
 }: InputSectionProps) {
   return (
-    <div className="p-4 space-y-2">
+    <div className="p-2 space-y-2">
       <div className="relative bg-muted/50 border border-border rounded-2xl overflow-hidden shadow-sm">
         {/* Placeholder text area */}
-        <div className="px-4 pt-3 pb-1">
+        <div className="px-2 pt-3 pb-1">
           <textarea
             value={input}
             onChange={(e) => onInputChange(e.target.value)}
@@ -69,7 +69,7 @@ export default function InputSection({
         </div>
         
         {/* Controls inside input */}
-        <div className="px-4 pb-3 flex items-center justify-between gap-2">
+        <div className="px-2 pb-3 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 relative">
             <AgentSelector
               agentMode={agentMode}

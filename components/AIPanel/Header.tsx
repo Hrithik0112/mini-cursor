@@ -44,7 +44,7 @@ const ChatTabs = [
 
 export default function Header({ onClose }: HeaderProps) {
   return (
-    <div className="flex items-center  px-4 py-3 border-b border-border">
+    <div className="flex items-center  px-2 py-2 border-b border-border">
       <div className="flex items-center  flex-1 min-w-0 relative">
         {/* Scrollable tabs container with fade */}
         <div className="flex-1 min-w-0 relative">
