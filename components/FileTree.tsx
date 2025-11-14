@@ -1,10 +1,11 @@
 'use client';
 
 import { FileNode, useStore } from '@/lib/store';
-import { ChevronRight, File, Folder } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { FileIcon } from '@/lib/fileIcons';
 
 interface FileTreeItemProps {
   node: FileNode;
@@ -45,10 +46,12 @@ function FileTreeItem({ node, level = 0 }: FileTreeItemProps) {
                 isExpanded && "rotate-90"
               )}
             />
-            <Folder size={14} className="text-blue-500 flex-shrink-0" />
+            <FileIcon name={node.name} isDirectory isExpanded={isExpanded} size={14} />
           </>
         ) : (
-          <File size={14} className="text-foreground/50 ml-4 flex-shrink-0" />
+          <div className="ml-4">
+            <FileIcon name={node.name} size={14} />
+          </div>
         )}
         <span className={cn(
           "text-sm truncate",

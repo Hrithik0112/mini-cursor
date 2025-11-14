@@ -11,12 +11,89 @@ export default function CodeEditor() {
   const { editor, updateFileContent } = useStore();
   const { activeFile, fileContents } = editor;
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+  const markerDisposableRef = useRef<monaco.IDisposable | null>(null);
 
   const content = activeFile
     ? fileContents[activeFile] ?? getFileContent(mockProject, activeFile) ?? ''
     : '';
 
   useEffect(() => {
+    // Completely disable ALL diagnostics FIRST (before any other config)
+    // Also explicitly ignore common error codes as a fallback
+    monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+      noSemanticValidation: true,  // Disable all semantic validation
+      noSyntaxValidation: true,    // Disable all syntax validation
+      noSuggestionDiagnostics: true, // Disable suggestion diagnostics
+      // Explicitly ignore common error codes (fallback in case validation isn't fully disabled)
+      diagnosticCodesToIgnore: [
+        7027, // Unreachable code detected
+        2307, // Cannot find module
+        2304, // Cannot find name
+        2552, // Cannot find name (for global types)
+        2580, // Cannot find name (for global types)
+        2588, // Cannot find name (for global types)
+        1109, // Expression expected
+        1005, // ';' expected
+        1128, // Declaration or statement expected
+      ],
+    });
+
+    monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+      noSemanticValidation: true,  // Disable all semantic validation
+      noSyntaxValidation: true,    // Disable all syntax validation
+      noSuggestionDiagnostics: true, // Disable suggestion diagnostics
+      // Explicitly ignore common error codes (fallback in case validation isn't fully disabled)
+      diagnosticCodesToIgnore: [
+        7027, // Unreachable code detected
+        2307, // Cannot find module
+        2304, // Cannot find name
+        2552, // Cannot find name (for global types)
+        2580, // Cannot find name (for global types)
+        2588, // Cannot find name (for global types)
+        1109, // Expression expected
+        1005, // ';' expected
+        1128, // Declaration or statement expected
+      ],
+    });
+
+    // Configure Monaco TypeScript compiler options (but validation is already disabled)
+    monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+      target: monaco.languages.typescript.ScriptTarget.Latest,
+      allowNonTsExtensions: true,
+      moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+      module: monaco.languages.typescript.ModuleKind.ESNext,
+      noEmit: true,
+      esModuleInterop: true,
+      jsx: monaco.languages.typescript.JsxEmit.React,
+      reactNamespace: 'React',
+      allowJs: true,
+      typeRoots: ['node_modules/@types'],
+      skipLibCheck: true,
+      // Disable all strict checks
+      noUnusedLocals: false,
+      noUnusedParameters: false,
+      noImplicitAny: false,
+      allowUnreachableCode: true, // Allow unreachable code
+      allowUnusedLabels: true,
+    });
+
+    // Configure JavaScript defaults as well
+    monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
+      target: monaco.languages.typescript.ScriptTarget.Latest,
+      allowNonTsExtensions: true,
+      moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+      module: monaco.languages.typescript.ModuleKind.ESNext,
+      noEmit: true,
+      esModuleInterop: true,
+      jsx: monaco.languages.typescript.JsxEmit.React,
+      reactNamespace: 'React',
+      allowJs: true,
+      typeRoots: ['node_modules/@types'],
+      skipLibCheck: true,
+      allowUnreachableCode: true, // Allow unreachable code
+      allowUnusedLabels: true,
+    });
+
     // Initialize file contents from mock data
     const initializeFiles = () => {
       const files: Record<string, string> = {};
@@ -43,13 +120,98 @@ export default function CodeEditor() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Clear markers whenever active file changes
+  useEffect(() => {
+    if (editorRef.current && activeFile) {
+      const model = editorRef.current.getModel();
+      if (model) {
+        // Clear all markers when switching files
+        monaco.editor.setModelMarkers(model, 'typescript', []);
+        monaco.editor.setModelMarkers(model, 'javascript', []);
+      }
+    }
+  }, [activeFile]);
+
+  // Cleanup marker listener on unmount
+  useEffect(() => {
+    return () => {
+      if (markerDisposableRef.current) {
+        markerDisposableRef.current.dispose();
+      }
+    };
+  }, []);
+
   const handleEditorDidMount = (editor: monaco.editor.IStandaloneCodeEditor) => {
     editorRef.current = editor;
+    
+    // Ensure all diagnostics are disabled after editor mounts
+    // This is a fallback to make sure no errors show up
+    setTimeout(() => {
+      monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+        noSemanticValidation: true,
+        noSyntaxValidation: true,
+        noSuggestionDiagnostics: true,
+        diagnosticCodesToIgnore: [
+          7027, // Unreachable code detected
+          2307, // Cannot find module
+          2304, // Cannot find name
+          2552, 2580, 2588, // Cannot find name variants
+          1109, 1005, 1128, // Syntax errors
+        ],
+      });
+      
+      monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+        noSemanticValidation: true,
+        noSyntaxValidation: true,
+        noSuggestionDiagnostics: true,
+        diagnosticCodesToIgnore: [
+          7027, // Unreachable code detected
+          2307, // Cannot find module
+          2304, // Cannot find name
+          2552, 2580, 2588, // Cannot find name variants
+          1109, 1005, 1128, // Syntax errors
+        ],
+      });
+      
+      // Clear any existing markers
+      const model = editor.getModel();
+      if (model) {
+        monaco.editor.setModelMarkers(model, 'typescript', []);
+        monaco.editor.setModelMarkers(model, 'javascript', []);
+        
+        // Dispose previous listener if it exists
+        if (markerDisposableRef.current) {
+          markerDisposableRef.current.dispose();
+        }
+        
+        // Set up a listener to immediately clear any markers that appear
+        markerDisposableRef.current = monaco.editor.onDidChangeMarkers((uris) => {
+          // Check if the current model is in the list of changed URIs
+          if (uris.some(uri => uri.toString() === model.uri.toString())) {
+            // Clear all markers for this model immediately
+            monaco.editor.setModelMarkers(model, 'typescript', []);
+            monaco.editor.setModelMarkers(model, 'javascript', []);
+          }
+        });
+      }
+    }, 100);
   };
 
   const handleEditorChange = (value: string | undefined) => {
     if (activeFile && value !== undefined) {
       updateFileContent(activeFile, value);
+      
+      // Clear any error markers that might appear
+      if (editorRef.current) {
+        const model = editorRef.current.getModel();
+        if (model) {
+          // Clear markers after a short delay to ensure they're cleared
+          setTimeout(() => {
+            monaco.editor.setModelMarkers(model, 'typescript', []);
+            monaco.editor.setModelMarkers(model, 'javascript', []);
+          }, 50);
+        }
+      }
     }
   };
 
@@ -108,6 +270,11 @@ export default function CodeEditor() {
             padding: { top: 8, bottom: 8 },
             lineHeight: 20,
             letterSpacing: 0.3,
+            // Disable error markers and validation in editor
+            renderValidationDecorations: 'off',
+            glyphMargin: false,
+            folding: true,
+            showFoldingControls: 'always',
           }}
         />
       </div>
