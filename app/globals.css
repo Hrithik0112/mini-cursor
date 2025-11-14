@@ -2,14 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #0d1117;
-  --foreground: #c9d1d9;
-  --sidebar-bg: #161b22;
-  --panel-bg: #0d1117;
-  --border: #30363d;
-  --accent: #1f6feb;
-  --accent-hover: #2f81f7;
+@layer base {
+  :root {
+    /* Beige/light theme colors */
+    --background: 30 20% 98%;
+    --foreground: 222 47% 11%;
+    --card: 30 20% 98%;
+    --card-foreground: 222 47% 11%;
+    --popover: 30 20% 98%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 30 20% 98%;
+    --secondary: 30 20% 95%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 30 20% 92%;
+    --muted-foreground: 222 47% 30%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 30 20% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 30 20% 98%;
+    --border: 30 20% 85%;
+    --input: 30 20% 92%;
+    --ring: 217 91% 60%;
+    --radius: 0.5rem;
+
+    /* Beige theme specific colors */
+    --sidebar-bg: 30 20% 96%;
+    --panel-bg: 30 20% 98%;
+    --accent-hover: 217 91% 65%;
+    --ai-panel-bg: 30 20% 96%;
+    --ai-panel-text: 222 47% 11%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
 }
 
 * {
@@ -23,8 +55,6 @@ body {
   max-width: 100vw;
   overflow-x: hidden;
   height: 100%;
-  background: var(--background);
-  color: var(--foreground);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
@@ -36,25 +66,26 @@ body {
 
 /* Monaco Editor overrides */
 .monaco-editor {
-  --vscode-editor-background: var(--background);
+  --vscode-editor-background: hsl(var(--background));
 }
 
-/* Scrollbar styling */
+/* Scrollbar styling - Beige theme */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--sidebar-bg);
+  background: hsl(var(--secondary));
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 4px;
+  background: hsl(var(--border));
+  border-radius: 5px;
+  border: 2px solid hsl(var(--secondary));
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #484f58;
+  background: hsl(var(--muted-foreground) / 0.3);
 }
 

@@ -4,6 +4,7 @@ import { FileNode, useStore } from '@/lib/store';
 import { ChevronRight, File, Folder } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 interface FileTreeItemProps {
   node: FileNode;
@@ -28,25 +29,33 @@ function FileTreeItem({ node, level = 0 }: FileTreeItemProps) {
     <div>
       <div
         onClick={handleClick}
-        className={`
-          flex items-center gap-1 px-2 py-1 cursor-pointer rounded
-          hover:bg-[var(--border)] transition-colors
-          ${isActive ? 'bg-[var(--accent)]/20' : ''}
-        `}
+        className={cn(
+          "flex items-center gap-1.5 px-2 py-1 cursor-pointer transition-colors rounded-sm",
+          "hover:bg-primary/10",
+          isActive && "bg-primary/15 text-foreground"
+        )}
         style={{ paddingLeft: `${8 + level * 16}px` }}
       >
         {node.isDirectory ? (
           <>
             <ChevronRight
-              size={14}
-              className={`transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+              size={12}
+              className={cn(
+                "transition-transform text-foreground/50 flex-shrink-0",
+                isExpanded && "rotate-90"
+              )}
             />
-            <Folder size={14} className="text-blue-400" />
+            <Folder size={14} className="text-blue-500 flex-shrink-0" />
           </>
         ) : (
-          <File size={14} className="text-gray-400 ml-4" />
+          <File size={14} className="text-foreground/50 ml-4 flex-shrink-0" />
         )}
-        <span className="text-sm text-[var(--foreground)]">{node.name}</span>
+        <span className={cn(
+          "text-sm truncate",
+          isActive ? "text-foreground font-medium" : "text-foreground/70"
+        )}>
+          {node.name}
+        </span>
       </div>
       <AnimatePresence>
         {node.isDirectory && isExpanded && node.children && (
@@ -70,12 +79,19 @@ export default function FileTree() {
   const { fileTree } = useStore();
 
   return (
-    <div className="h-full overflow-y-auto bg-[var(--sidebar-bg)] border-r border-[var(--border)]">
-      <div className="p-2">
-        <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">
-          Files
+    <div className="h-full flex flex-col bg-secondary border-r border-border">
+      {/* Title Header */}
+      <div className="px-4 py-2.5 border-b border-border bg-secondary/80">
+        <h2 className="text-xs font-semibold text-foreground uppercase tracking-wider">
+          MINI-CURSOR
+        </h2>
+      </div>
+      
+      {/* File Tree Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="py-1">
+          <FileTreeItem node={fileTree} />
         </div>
-        <FileTreeItem node={fileTree} />
       </div>
     </div>
   );

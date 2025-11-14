@@ -38,7 +38,7 @@ export default function Home() {
   }, [aiPanelOpen, setAIPanelOpen]);
 
   return (
-    <div className="h-screen flex flex-col bg-[var(--background)]">
+    <div className="h-screen flex flex-col bg-background">
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar - File Tree */}
         <div className="w-64 flex-shrink-0">

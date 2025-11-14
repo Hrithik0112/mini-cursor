@@ -5,6 +5,7 @@ import Editor from '@monaco-editor/react';
 import { useStore } from '@/lib/store';
 import { mockProject, getFileContent } from '@/lib/mockData';
 import * as monaco from 'monaco-editor';
+import { FileText, FolderOpen } from 'lucide-react';
 
 export default function CodeEditor() {
   const { editor, updateFileContent } = useStore();
@@ -62,28 +63,36 @@ export default function CodeEditor() {
 
   if (!activeFile) {
     return (
-      <div className="h-full flex items-center justify-center bg-[var(--background)] text-gray-500">
-        <div className="text-center">
-          <p className="text-lg mb-2">No file selected</p>
-          <p className="text-sm">Open a file from the sidebar to start editing</p>
+      <div className="h-full flex items-center justify-center bg-background">
+        <div className="text-center max-w-md px-6">
+          <h3 className="text-xl font-semibold text-foreground mb-2">
+            No file selected
+          </h3>
+          <p className="text-sm text-foreground/60 mb-6 leading-relaxed">
+            Select a file from the sidebar to start editing, or use the file explorer to navigate your project.
+          </p>
+          <div className="flex items-center justify-center gap-2 text-xs text-foreground/50">
+            <FolderOpen size={14} />
+            <span>Browse files in the left sidebar</span>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full bg-[var(--background)]">
+    <div className="h-full bg-background">
       <div className="h-full">
         <Editor
           height="100%"
           language={getLanguage(activeFile)}
           value={content}
-          theme="vs-dark"
+          theme="vs"
           onChange={handleEditorChange}
           onMount={handleEditorDidMount}
           options={{
             minimap: { enabled: true },
-            fontSize: 14,
+            fontSize: 13,
             lineNumbers: 'on',
             roundedSelection: false,
             scrollBeyondLastLine: false,
@@ -91,6 +100,14 @@ export default function CodeEditor() {
             automaticLayout: true,
             tabSize: 2,
             wordWrap: 'on',
+            fontFamily: 'SF Mono, Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace',
+            fontLigatures: true,
+            cursorBlinking: 'smooth',
+            cursorSmoothCaretAnimation: 'on',
+            smoothScrolling: true,
+            padding: { top: 8, bottom: 8 },
+            lineHeight: 20,
+            letterSpacing: 0.3,
           }}
         />
       </div>

@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { mockContextSearch } from '@/lib/mockRAG';
 import { mockProject } from '@/lib/mockData';
 import { generateMockEdit, applyCodeEdit } from '@/lib/codeEdit';
+import { cn } from '@/lib/utils';
 
 export default function AIPanel() {
   const {
@@ -165,7 +166,7 @@ export default function AIPanel() {
     return (
       <button
         onClick={() => setAIPanelOpen(true)}
-        className="fixed right-0 top-1/2 -translate-y-1/2 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white p-2 rounded-l-lg transition-colors z-10"
+        className="fixed right-0 top-1/2 -translate-y-1/2 bg-primary hover:bg-primary/90 text-primary-foreground p-2 rounded-l-lg transition-colors z-10"
       >
         <Sparkles size={20} />
       </button>
@@ -177,131 +178,143 @@ export default function AIPanel() {
       initial={{ width: 0 }}
       animate={{ width: 400 }}
       exit={{ width: 0 }}
-      className="h-full bg-[var(--sidebar-bg)] border-l border-[var(--border)] flex flex-col"
+      className="h-full bg-aiPanel border-l border-border flex flex-col"
     >
-      <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
-        <div className="flex items-center gap-2">
-          <Sparkles size={18} className="text-[var(--accent)]" />
-          <h2 className="font-semibold text-[var(--foreground)]">AI Assistant</h2>
-        </div>
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <h2 className="text-sm font-semibold text-aiPanel-text">New Chat</h2>
         <button
           onClick={() => setAIPanelOpen(false)}
-          className="p-1 hover:bg-[var(--border)] rounded transition-colors"
+          className="p-1 hover:bg-primary/10 rounded transition-colors text-aiPanel-text/60 hover:text-aiPanel-text"
         >
           <X size={16} />
         </button>
       </div>
 
-      {/* Context Section */}
-      {ai.context.length > 0 && (
-        <div className="p-4 border-b border-[var(--border)] bg-[var(--background)]/50">
-          <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-            📌 Relevant Context (Mock)
-          </div>
-          {ai.context.map((ctx, idx) => (
-            <div key={idx} className="text-xs text-gray-300 mb-2 last:mb-0">
-              <span className="text-[var(--accent)]">{ctx.file}</span>
-              <span className="text-gray-500 ml-2">
-                (line {ctx.lineRange[0]}–{ctx.lineRange[1]})
-              </span>
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Context Section */}
+        {ai.context.length > 0 && (
+          <div className="p-4 border-b border-border bg-background/50">
+            <div className="text-xs font-semibold text-aiPanel-text/70 uppercase tracking-wider mb-2">
+              📌 Relevant Context (Mock)
             </div>
-          ))}
-        </div>
-      )}
-
-      {/* Pending Edit Section */}
-      {ai.pendingEdit && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="p-4 border-b border-[var(--border)] bg-green-500/10"
-        >
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <div className="flex items-center gap-2">
-              <Code size={16} className="text-green-400" />
-              <div className="text-sm font-semibold text-[var(--foreground)]">
-                Code Edit Ready
+            {ai.context.map((ctx, idx) => (
+              <div key={idx} className="text-xs text-aiPanel-text/80 mb-2 last:mb-0">
+                <span className="text-primary">{ctx.file}</span>
+                <span className="text-aiPanel-text/60 ml-2">
+                  (line {ctx.lineRange[0]}–{ctx.lineRange[1]})
+                </span>
               </div>
+            ))}
+          </div>
+        )}
+
+        {/* Pending Edit Section */}
+        {ai.pendingEdit && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-4 border-b border-border bg-green-500/10"
+          >
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                <Code size={16} className="text-green-600" />
+                <div className="text-sm font-semibold text-aiPanel-text">
+                  Code Edit Ready
+                </div>
+              </div>
+              <button
+                onClick={() => setPendingEdit(null)}
+                className="p-1 hover:bg-black/5 rounded transition-colors text-aiPanel-text/60"
+              >
+                <X size={14} />
+              </button>
+            </div>
+            {ai.pendingEdit.description && (
+              <p className="text-xs text-aiPanel-text/70 mb-3">{ai.pendingEdit.description}</p>
+            )}
+            <div className="text-xs text-aiPanel-text/80 mb-3 font-mono bg-background/50 p-2 rounded border border-border">
+              <div className="text-red-600">- {ai.pendingEdit.oldText.split('\n')[0]}...</div>
+              <div className="text-green-600">+ {ai.pendingEdit.newText.split('\n')[0]}...</div>
             </div>
             <button
-              onClick={() => setPendingEdit(null)}
-              className="p-1 hover:bg-[var(--border)] rounded transition-colors"
+              onClick={handleApplyEdit}
+              className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors"
             >
-              <X size={14} />
+              <Check size={16} />
+              Apply Edit
             </button>
-          </div>
-          {ai.pendingEdit.description && (
-            <p className="text-xs text-gray-400 mb-3">{ai.pendingEdit.description}</p>
-          )}
-          <div className="text-xs text-gray-300 mb-3 font-mono bg-[var(--background)] p-2 rounded border border-[var(--border)]">
-            <div className="text-red-400">- {ai.pendingEdit.oldText.split('\n')[0]}...</div>
-            <div className="text-green-400">+ {ai.pendingEdit.newText.split('\n')[0]}...</div>
-          </div>
-          <button
-            onClick={handleApplyEdit}
-            className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors"
-          >
-            <Check size={16} />
-            Apply Edit
-          </button>
-        </motion.div>
-      )}
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {ai.messages.length === 0 && (
-          <div className="text-center text-gray-500 text-sm mt-8">
-            <Sparkles size={32} className="mx-auto mb-2 opacity-50" />
-            <p>Ask me anything about your code!</p>
-          </div>
+          </motion.div>
         )}
-        {ai.messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            <div
-              className={`max-w-[85%] rounded-lg p-3 ${
-                message.role === 'user'
-                  ? 'bg-[var(--accent)] text-white'
-                  : 'bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)]'
-              }`}
-            >
-              <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+
+        {/* Messages */}
+        <div className="p-4 space-y-4">
+          {ai.messages.length === 0 && (
+            <div className="text-center text-aiPanel-text/50 text-sm mt-8">
+              <Sparkles size={32} className="mx-auto mb-2 opacity-30" />
+              <p>Start a conversation</p>
             </div>
-          </div>
-        ))}
-        {ai.isStreaming && (
-          <div className="flex justify-start">
-            <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-3">
-              <div className="flex gap-1">
-                <div className="w-2 h-2 bg-[var(--accent)] rounded-full animate-bounce" />
-                <div className="w-2 h-2 bg-[var(--accent)] rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-                <div className="w-2 h-2 bg-[var(--accent)] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+          )}
+          {ai.messages.map((message) => (
+            <div
+              key={message.id}
+              className={cn("flex", message.role === 'user' ? 'justify-end' : 'justify-start')}
+            >
+              <div
+                className={cn(
+                  "max-w-[85%] rounded-lg p-3",
+                  message.role === 'user'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-background/70 border border-border text-aiPanel-text'
+                )}
+              >
+                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
               </div>
             </div>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
+          ))}
+        {ai.isStreaming && (
+          <div className="flex justify-start">
+            <div className="bg-background/70 border border-border rounded-lg p-3">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce" />
+                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                </div>
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
       </div>
 
-      {/* Input */}
-      <div className="p-4 border-t border-[var(--border)]">
-        <div className="flex gap-2">
+      {/* Input Section */}
+      <div className="p-4 border-t border-border space-y-2">
+        <div className="relative">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Ask a question or request a code change... (⌘K to toggle)"
-            className="flex-1 bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--foreground)] placeholder-gray-500 resize-none focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            placeholder="Plan, @ for context, / for commands"
+            className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-sm text-aiPanel-text placeholder:text-aiPanel-text/50 resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-colors"
             rows={2}
           />
+        </div>
+        <div className="flex items-center justify-between text-xs text-aiPanel-text/60">
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1">
+              <span className="text-lg">∞</span>
+              <span>Agent</span>
+            </span>
+            <span>Auto</span>
+          </div>
           <button
             onClick={handleSend}
             disabled={!input.trim() || ai.isStreaming}
-            className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed text-white p-2 rounded-lg transition-colors"
+            className="bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-primary-foreground px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5"
           >
-            <Send size={18} />
+            <Send size={14} />
+            Send
           </button>
         </div>
       </div>
