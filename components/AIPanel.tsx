@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useStore } from '@/lib/store';
-import { Send, X, Sparkles, Check, Code } from 'lucide-react';
+import { Send, X, Sparkles, Check, Code, AtSign, Globe, Image as ImageIcon, Mic, Folder, ChevronDown, Plus, Clock, MoreVertical } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { mockContextSearch } from '@/lib/mockRAG';
 import { mockProject } from '@/lib/mockData';
@@ -13,6 +13,8 @@ export default function AIPanel() {
   const {
     aiPanelOpen,
     setAIPanelOpen,
+    aiPanelWidth,
+    setAIPanelWidth,
     ai,
     addAIMessage,
     updateLastAIMessage,
@@ -31,6 +33,12 @@ export default function AIPanel() {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
+  const [agentMode, setAgentMode] = useState('Agent');
+  const [autoMode, setAutoMode] = useState('Auto');
+  const [isResizing, setIsResizing] = useState(false);
+  const resizeRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -39,6 +47,62 @@ export default function AIPanel() {
   useEffect(() => {
     scrollToBottom();
   }, [ai.messages]);
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      // Cancel any pending animation frame
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+
+      // Use requestAnimationFrame for smooth updates
+      rafRef.current = requestAnimationFrame(() => {
+        if (!panelRef.current) return;
+        
+        const newWidth = Math.max(300, window.innerWidth - e.clientX);
+        
+        // Direct DOM manipulation for immediate visual feedback
+        panelRef.current.style.width = `${newWidth}px`;
+      });
+    };
+
+    const handleMouseUp = (e: MouseEvent) => {
+      // Final update to store on mouseup
+      if (panelRef.current) {
+        const finalWidth = Math.max(300, window.innerWidth - e.clientX);
+        setAIPanelWidth(finalWidth);
+      }
+      
+      setIsResizing(false);
+      
+      // Clean up
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+
+    document.addEventListener('mousemove', handleMouseMove, { passive: true });
+    document.addEventListener('mouseup', handleMouseUp);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    document.body.style.pointerEvents = 'auto';
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      document.body.style.pointerEvents = '';
+      
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+  }, [isResizing, setAIPanelWidth]);
 
   const handleSend = async () => {
     if (!input.trim() || ai.isStreaming) return;
@@ -175,20 +239,71 @@ export default function AIPanel() {
 
   return (
     <motion.div
-      initial={{ width: 0 }}
-      animate={{ width: 400 }}
+      ref={panelRef}
+      initial={{ width: aiPanelOpen ? aiPanelWidth : 0 }}
+      animate={!isResizing ? { width: aiPanelOpen ? aiPanelWidth : 0 } : undefined}
       exit={{ width: 0 }}
-      className="h-full bg-aiPanel border-l border-border flex flex-col"
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+      className="h-full bg-aiPanel border-l border-border flex flex-col relative"
+      style={{
+        width: isResizing ? undefined : (aiPanelOpen ? aiPanelWidth : 0),
+        willChange: isResizing ? 'width' : 'auto',
+      }}
     >
+      {/* Resize Handle */}
+      <div
+        ref={resizeRef}
+        onMouseDown={(e) => {
+          e.preventDefault();
+          setIsResizing(true);
+        }}
+        className="absolute left-0 top-0 bottom-0 w-2 cursor-col-resize z-10 flex items-center justify-center"
+      >
+        <div
+          className={cn(
+            "h-full w-0.5 hover:w-1 hover:bg-primary/40 transition-all",
+            isResizing && "w-1 bg-primary/60"
+          )}
+        />
+      </div>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <h2 className="text-sm font-semibold text-aiPanel-text">New Chat</h2>
-        <button
-          onClick={() => setAIPanelOpen(false)}
-          className="p-1 hover:bg-primary/10 rounded transition-colors text-aiPanel-text/60 hover:text-aiPanel-text"
-        >
-          <X size={16} />
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <div className="px-2.5 py-1 text-xs font-medium rounded bg-background/50 text-aiPanel-text/60">
+              Build a minimalist
+            </div>
+            <div className="px-2.5 py-1 text-xs font-medium rounded bg-background/50 text-aiPanel-text/60">
+              Create theme and
+            </div>
+            <div className="px-2.5 py-1 text-xs font-medium rounded bg-background text-aiPanel-text border border-border">
+              New Chat
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            className="p-1.5 hover:bg-primary/10 rounded transition-colors text-aiPanel-text/60 hover:text-aiPanel-text"
+          >
+            <Plus size={16} />
+          </button>
+          <button
+            className="p-1.5 hover:bg-primary/10 rounded transition-colors text-aiPanel-text/60 hover:text-aiPanel-text"
+          >
+            <Clock size={16} />
+          </button>
+          <button
+            className="p-1.5 hover:bg-primary/10 rounded transition-colors text-aiPanel-text/60 hover:text-aiPanel-text"
+          >
+            <MoreVertical size={16} />
+          </button>
+          <button
+            onClick={() => setAIPanelOpen(false)}
+            className="p-1.5 hover:bg-primary/10 rounded transition-colors text-aiPanel-text/60 hover:text-aiPanel-text"
+          >
+            <X size={16} />
+          </button>
+        </div>
       </div>
 
       {/* Messages Area */}
@@ -290,33 +405,60 @@ export default function AIPanel() {
 
       {/* Input Section */}
       <div className="p-4 border-t border-border space-y-2">
-        <div className="relative">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Plan, @ for context, / for commands"
-            className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-sm text-aiPanel-text placeholder:text-aiPanel-text/50 resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-colors"
-            rows={2}
-          />
-        </div>
-        <div className="flex items-center justify-between text-xs text-aiPanel-text/60">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1">
-              <span className="text-lg">∞</span>
-              <span>Agent</span>
-            </span>
-            <span>Auto</span>
+        <div className="relative bg-background border border-border rounded-2xl overflow-hidden shadow-sm">
+          {/* Placeholder text area */}
+          <div className="px-4 pt-4 pb-1">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Plan, @ for context, / for commands"
+              className="w-full bg-transparent text-sm text-aiPanel-text placeholder:text-aiPanel-text/40 resize-none focus:outline-none min-h-[70px] leading-relaxed"
+              rows={3}
+            />
           </div>
-          <button
-            onClick={handleSend}
-            disabled={!input.trim() || ai.isStreaming}
-            className="bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-primary-foreground px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5"
-          >
-            <Send size={14} />
-            Send
-          </button>
+          
+          {/* Controls inside input */}
+          <div className="px-4 pb-3 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              {/* Agent selector */}
+              <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-muted/60 hover:bg-muted border border-border/60 text-xs font-medium text-aiPanel-text transition-colors">
+                <span className="text-base leading-none">∞</span>
+                <span>{agentMode}</span>
+                <ChevronDown size={12} className="text-aiPanel-text/50" />
+              </button>
+              
+              {/* Auto selector */}
+              <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-transparent hover:bg-muted/30 text-xs font-medium text-aiPanel-text/70 transition-colors">
+                <span>{autoMode}</span>
+                <ChevronDown size={12} className="text-aiPanel-text/50" />
+              </button>
+            </div>
+            
+            {/* Right side icons */}
+            <div className="flex items-center gap-0.5">
+              <button className="p-2 hover:bg-muted/50 rounded-lg transition-colors text-aiPanel-text/60 hover:text-aiPanel-text">
+                <AtSign size={16} />
+              </button>
+              <button className="p-2 hover:bg-muted/50 rounded-lg transition-colors text-aiPanel-text/60 hover:text-aiPanel-text">
+                <Globe size={16} />
+              </button>
+              <button className="p-2 hover:bg-muted/50 rounded-lg transition-colors text-aiPanel-text/60 hover:text-aiPanel-text">
+                <ImageIcon size={16} />
+              </button>
+              <button className="p-2 bg-muted/60 hover:bg-muted rounded-lg transition-colors text-aiPanel-text">
+                <Mic size={16} />
+              </button>
+            </div>
+          </div>
         </div>
+        
+        {/* Local option */}
+        <button className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted/30 transition-colors text-xs text-aiPanel-text/70 hover:text-aiPanel-text w-full">
+          <Folder size={14} />
+          <span>Local</span>
+          <ChevronDown size={12} className="text-aiPanel-text/50 ml-auto" />
+        </button>
       </div>
     </motion.div>
   );

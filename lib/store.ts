@@ -61,6 +61,7 @@ interface AppState {
   // UI
   aiPanelOpen: boolean;
   agentLogOpen: boolean;
+  aiPanelWidth: number;
   
   // Actions
   setFileTree: (tree: FileNode) => void;
@@ -70,6 +71,7 @@ interface AppState {
   updateFileContent: (path: string, content: string) => void;
   setAIPanelOpen: (open: boolean) => void;
   setAgentLogOpen: (open: boolean) => void;
+  setAIPanelWidth: (width: number) => void;
   addAIMessage: (role: 'user' | 'assistant', content: string) => void;
   updateLastAIMessage: (content: string) => void;
   setAIStreaming: (streaming: boolean) => void;
@@ -106,6 +108,7 @@ export const useStore = create<AppState>((set) => ({
   },
   aiPanelOpen: true,
   agentLogOpen: true,
+  aiPanelWidth: 400,
   
   // Actions
   setFileTree: (tree) => set({ fileTree: tree }),
@@ -155,6 +158,7 @@ export const useStore = create<AppState>((set) => ({
   
   setAIPanelOpen: (open) => set({ aiPanelOpen: open }),
   setAgentLogOpen: (open) => set({ agentLogOpen: open }),
+  setAIPanelWidth: (width) => set({ aiPanelWidth: Math.max(300, width) }),
   
   addAIMessage: (role, content) =>
     set((state) => ({
